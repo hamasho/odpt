@@ -53,8 +53,8 @@ def init_railway():
         items[id] = Railway(
             id=id,
             operator_id=item['odpt:operator'],
-            title=item['odpt:railwayTitle']['en'],
-            title_ja=item['dc:title'],
+            name=item['odpt:railwayTitle']['en'],
+            name_ja=item['dc:title'],
         )
         try:
             new_nodes = get_nodes(item['odpt:stationOrder'])
@@ -73,8 +73,8 @@ def init_station():
         items[id] = Station(
             id=id,
             railway_id=item['odpt:railway'],
-            title=item['odpt:stationTitle']['en'],
-            title_ja=item['dc:title'],
+            name=item['odpt:stationTitle']['en'],
+            name_ja=item['dc:title'],
             lat=item.get('geo:lat'),
             lng=item.get('geo:long'),
         )
