@@ -5,6 +5,8 @@ from analysis.models import session, Node, Station, Railway, IS_SUBWAY, IS_DISPL
 START_TIME = '2012-03-15T10:00:00Z'
 END_TIME = '2012-03-16T10:00:00Z'
 
+HEIGHT = 100
+
 
 def create_czml():
     return [{
@@ -25,10 +27,10 @@ def station(st):
     is_subway = st.railway.operator_id in IS_SUBWAY
     delta = 0.0005
     if is_subway:
-        height = -100
+        height = -HEIGHT
         color = [255, 0, 0, 255]
     else:
-        height = 100
+        height = HEIGHT
         color = [0, 255, 0, 255]
 
     positions = [
@@ -61,47 +63,65 @@ def station(st):
 
 
 def rail(node):
-    pass
+    st1 = node.st1
+    st2 = node.st2
+    name = f'{st1.name} <-> {st2.name}'
+    is_subway = st1.railway.operator_id in IS_SUBWAY
+    if is_subway:
+        height = -HEIGHT
+        color = [255, 192, 192, 128]
+    else:
+        height = HEIGHT
+        color = [192, 255, 192, 128]
+
+    result = {
+        'id': str(node.id),
+        'name': name,
+        'polyline': {
+            'positions': {
+                'cartographicDegrees': [
+                    st1.lng, st1.lat, height,
+                    st2.lng, st2.lat, height,
+                ],
+            },
+            'material': {
+                'solidColor': {
+                    'color': {
+                        'rgba': color,
+                    },
+                },
+            },
+            'width': 3.0,
+        },
+    }
+    return result
 
 
 def create_train_czml():
     czml = create_czml()
     nodes = list(
-        session.query(Node).join(Node.st1, Station.railway)
+        session.query(Node)
+        .join(Node.st1, Station.railway)
         .filter(Railway.operator_id.in_(IS_DISPLAYED))
     )
-    ops = set()
+    stations = {}
     print('queried')
+
     for node in nodes:
-        if not node.st1 or not node.st2:
-            continue
         st1 = node.st1
         st2 = node.st2
-        ops.add(st1.railway.operator_id)
-        print(st1.name, st1.lat, st1.lng)
-        print(st2.name, st2.lat, st2.lng)
-        print()
-        czml.append({
-            'id': str(node.id),
-            'name': str(node.id),
-            'polyline': {
-                'positions': {
-                    'cartographicDegrees': [
-                        st1.lng, st1.lat, 0,
-                        st2.lng, st2.lat, 0,
-                    ],
-                },
-                'material': {
-                    'solidColor': {
-                        'color': {
-                            'rgba': [128, 0, 0, 255],
-                        },
-                    },
-                },
-                'width': 1.0,
-            },
-        })
-        czml.append(station(st1))
+        if not st1 or not st2:
+            continue
+
+        czml.append(rail(node))
+        stations[st1.id] = st1
+        stations[st2.id] = st2
+
+    for st in stations.values():
+        czml.append(station(st))
+
+    print('finished')
+
     return czml
 
 
