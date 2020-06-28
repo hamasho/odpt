@@ -8,6 +8,7 @@ DEBUG = False
 engine = create_engine(f'sqlite:///{CONFIG["PROJECT_DIR"]}/db.sqlite', echo=DEBUG)
 Session = sessionmaker()
 Session.configure(bind=engine)
+session = Session()
 
 
 class _Base:

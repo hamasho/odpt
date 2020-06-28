@@ -1,14 +1,10 @@
-from analysis.models.base import Base, engine, Session
+from analysis.models.base import Base, engine, session
 from analysis.models.stations import Operator, Railway, Station, Node
 from analysis.api import download_all
 
 
 Base.metadata.drop_all(engine)
 Base.metadata.create_all(engine)
-
-session = Session()
-# session.add(u)
-# session.commit()
 
 all_data = download_all()
 operators = all_data['odpt:Operator']

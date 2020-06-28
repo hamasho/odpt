@@ -1,6 +1,12 @@
+# common
 *.pyc
 __pycache__
 node_modules
+
+# analysis related
 /response.sqlite
 /db.sqlite
 /cache
+
+# frontend
+/public/**/*.czml
