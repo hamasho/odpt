@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Float, ForeignKey
+from sqlalchemy import Column, Boolean, Integer, String, Float, ForeignKey
 from sqlalchemy.orm import relationship
 from .base import Base
 
@@ -15,6 +15,8 @@ class Railway(Base):
     name = Column(String, nullable=False)
     name_ja = Column(String, nullable=False)
 
+    operator = relationship(Operator, lazy='joined')
+
 
 class Station(Base):
     id = Column(String, primary_key=True)
@@ -23,6 +25,8 @@ class Station(Base):
     name_ja = Column(String, nullable=False)
     lat = Column(Float)
     lng = Column(Float)
+
+    railway = relationship(Railway, lazy='joined')
 
 
 class Node(Base):
@@ -42,3 +46,65 @@ class Node(Base):
         foreign_keys=[st2_id],
         lazy='joined',
     )
+
+
+IS_RAILWAY_COMPANY = [
+    'odpt.Operator:Aizu',
+    'odpt.Operator:Chichibu',
+    'odpt.Operator:Fujikyu',
+    'odpt.Operator:HakoneTozan',
+    'odpt.Operator:Hokuso',
+    'odpt.Operator:IzuHakone',
+    'odpt.Operator:Izukyu',
+    'odpt.Operator:JR-Central',
+    'odpt.Operator:JR-Shikoku',
+    'odpt.Operator:JR-West',
+    'odpt.Operator:KashimaRinkai',
+    'odpt.Operator:Minatomirai',
+    'odpt.Operator:SaitamaRailway',
+    'odpt.Operator:Shibayama',
+    'odpt.Operator:ShinKeisei',
+    'odpt.Operator:Tobu',
+    'odpt.Operator:Toei',
+    'odpt.Operator:JR-East',
+    'odpt.Operator:Keikyu',
+    'odpt.Operator:Keio',
+    'odpt.Operator:Keisei',
+    'odpt.Operator:Odakyu',
+    'odpt.Operator:Seibu',
+    'odpt.Operator:TokyoMetro',
+    'odpt.Operator:TokyoMonorail',
+    'odpt.Operator:Hokuetsu',
+    'odpt.Operator:Tokyu',
+    'odpt.Operator:ToyoRapid',
+    'odpt.Operator:Yagan',
+    'odpt.Operator:Sotetsu',
+    'odpt.Operator:Yurikamome',
+    'odpt.Operator:TWR',
+]
+
+IS_DISPLAYED = [
+    # 'odpt.Operator:JR-Central',
+    # 'odpt.Operator:Minatomirai',
+    # 'odpt.Operator:SaitamaRailway',
+    # 'odpt.Operator:ShinKeisei',
+    # 'odpt.Operator:Tobu',
+    'odpt.Operator:Toei',
+    'odpt.Operator:JR-East',
+    # 'odpt.Operator:Keikyu',
+    # 'odpt.Operator:Keio',
+    # 'odpt.Operator:Keisei',
+    # 'odpt.Operator:Odakyu',
+    # 'odpt.Operator:Seibu',
+    'odpt.Operator:TokyoMetro',
+    # 'odpt.Operator:TokyoMonorail',
+    # 'odpt.Operator:Tokyu',
+    # 'odpt.Operator:ToyoRapid',
+    # 'odpt.Operator:Yurikamome',
+    # 'odpt.Operator:TWR',
+]
+
+IS_SUBWAY = [
+    'odpt.Operator:Toei',
+    'odpt.Operator:TokyoMetro',
+]
