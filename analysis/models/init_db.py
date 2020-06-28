@@ -1,5 +1,8 @@
+import datetime
 from analysis.models.base import Base, engine, session
-from analysis.models.stations import Operator, Railway, Station, Node
+from analysis.models.stations import (
+    Operator, Railway, Station, Node, Train, TrainTimetable,
+)
 from analysis.api import download_all
 
 
@@ -10,6 +13,7 @@ all_data = download_all()
 operators = all_data['odpt:Operator']
 railways = all_data['odpt:Railway']
 stations = all_data['odpt:Station']
+timetables = all_data['odpt:TrainTimetable']
 
 
 def init_operator():
@@ -30,7 +34,6 @@ def get_nodes(orders):
         return []
     result = []
     for idx, order in enumerate(orders[:-1]):
-        __import__('pprint').pprint(order)
         if order['odpt:index'] != idx + 1:
             raise ValueError('not in order')
         result.append(Node(
@@ -77,7 +80,47 @@ def init_station():
     session.bulk_save_objects(items.values())
 
 
+def init_timetable():
+    trains = {}
+    items = []
+    for item in timetables:
+        id = item['owl:sameAs']
+        cal = item['odpt:calendar']
+        if cal != 'odpt.Calendar:Weekday':
+            continue
+
+        assert id not in trains
+        trains[id] = Train(
+            id=id,
+            railway_id=item['odpt:railway'],
+            name=item['odpt:trainNumber'],
+            calendar=cal,
+            type=item['odpt:trainType'],
+        )
+
+        for tt in item['odpt:trainTimetableObject']:
+            time = tt.get('odpt:departureTime')
+            st = tt.get('odpt:departureStation')
+            if not time:
+                time = tt.get('odpt:arrivalTime')
+                st = tt.get('odpt:arrivalStation')
+            if not time:
+                continue
+
+            h, m = time.split(':')
+
+            items.append(TrainTimetable(
+                train_id=id,
+                station_id=st,
+                time=datetime.time(int(h), int(m)),
+            ))
+
+    session.bulk_save_objects(items)
+    session.bulk_save_objects(trains.values())
+
+
 init_operator()
 init_station()
 init_railway()
+init_timetable()
 session.commit()

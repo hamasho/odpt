@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Boolean, Integer, String, Float, ForeignKey
+from sqlalchemy import Column, Integer, String, Float, ForeignKey, Time
 from sqlalchemy.orm import relationship
 from .base import Base
 
@@ -46,6 +46,26 @@ class Node(Base):
         foreign_keys=[st2_id],
         lazy='joined',
     )
+
+
+class Train(Base):
+    id = Column(String, primary_key=True)
+    railway_id = Column(String, ForeignKey('railway.id'), nullable=False)
+    name = Column(String, nullable=False)
+    calendar = Column(String, nullable=False)
+    type = Column(String, nullable=False)
+
+    railway = relationship(Railway, lazy='joined')
+
+
+class TrainTimetable(Base):
+    id = Column(Integer, primary_key=True)
+    train_id = Column(String, ForeignKey('train.id'), nullable=False)
+    station_id = Column(String, ForeignKey('station.id'), nullable=False)
+    time = Column(Time, nullable=False)
+
+    train = relationship(Train, lazy='joined', backref='timetables')
+    station = relationship(Station, lazy='joined', backref='timetables')
 
 
 IS_RAILWAY_COMPANY = [

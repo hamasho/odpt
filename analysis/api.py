@@ -10,9 +10,10 @@ requests_cache.install_cache('response')
 DATA_TYPES = [
     'odpt:PassengerSurvey',
     'odpt:Station',
-    # 'odpt:StationTimetable',
     'odpt:Railway',
     'odpt:Operator',
+    'odpt:TrainTimetable',
+    # 'odpt:StationTimetable',
 ]
 
 
