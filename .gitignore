@@ -3,6 +3,8 @@
 __pycache__
 node_modules
 
+.env
+
 # analysis related
 /response.sqlite
 /db.sqlite
