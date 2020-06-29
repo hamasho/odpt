@@ -8,6 +8,7 @@ disable =
     redefined-builtin,
     invalid-name,
     relative-beyond-top-level,
+    no-member,
 
 ignored-modules =
     sqlalchemy,

@@ -1,10 +1,20 @@
 import json
 import math
-from analysis.models import session, Node, Station, Railway, IS_SUBWAY, IS_DISPLAYED
+import datetime
+from sqlalchemy.orm import joinedload
+from analysis.models import (
+    session, Node, Station, Railway, Train, TrainTimetable,
+    IS_SUBWAY, IS_DISPLAYED,
+)
 
 
-START_TIME = '2012-03-15T10:00:00Z'
-END_TIME = '2012-03-16T10:00:00Z'
+START_HOUR = 11
+END_HOUR = 12
+START_T = datetime.time(START_HOUR, 0)
+END_T = datetime.time(END_HOUR, 0)
+TIME_FORMAT = '2020-06-29T{:02d}:{:02d}:00Z'
+START_TIME = TIME_FORMAT.format(START_HOUR, 0)
+END_TIME = TIME_FORMAT.format(END_HOUR, 0)
 
 HEIGHT = 100
 DELTA = 0.0005
@@ -15,13 +25,13 @@ def create_czml():
         'id': 'document',
         'name': 'test',
         'version': '1.0',
-        # 'clock': {
-        #     'interval': f'{START_TIME}/{END_TIME}',
-        #     'currentTime': START_TIME,
-        #     'multiplier': 60,
-        #     'range': 'LOOP_STOP',
-        #     'step': 'SYSTEM_CLOCK_MULTIPLIER'
-        # },
+        'clock': {
+            'interval': f'{START_TIME}/{END_TIME}',
+            'currentTime': START_TIME,
+            'multiplier': 20,
+            'range': 'LOOP_STOP',
+            'step': 'SYSTEM_CLOCK_MULTIPLIER'
+        },
     }]
 
 
@@ -40,7 +50,6 @@ def line2rect(p0, p1, thick, height):
         x1 - px, y1 - py, height,
         x0 - px, y0 - py, height,
     ]
-    print(points)
     return points
 
 
@@ -118,7 +127,70 @@ def rail(node):
     return result
 
 
-def create_train_czml():
+def time_diff(t1, t2):
+    tt1 = datetime.datetime.combine(datetime.date.today(), t1)
+    tt2 = datetime.datetime.combine(datetime.date.today(), t2)
+    return (tt2 - tt1).seconds
+
+
+def moving_train(train):
+    is_subway = train.railway.operator_id in IS_SUBWAY
+    if is_subway:
+        height = -1.5 * HEIGHT
+    else:
+        height = 1.5 * HEIGHT
+
+    tts = train.timetables
+    if len(tts) <= 1:
+        return []
+    items = []
+    for idx, tt in enumerate(tts[:-1]):
+        tt2 = tts[idx + 1]
+        if tt.time < START_T or tt2.time > END_T:
+            continue
+
+        start = TIME_FORMAT.format(tt.time.hour, tt.time.minute)
+        end = TIME_FORMAT.format(tt2.time.hour, tt2.time.minute)
+        id = f'{train.name} - {tt.time}-{tt2.time}'
+        item = {
+            'id': id,
+            'name': id,
+            'availability': f'{start}/{end}',
+            "billboard" : {
+                "eyeOffset" : {
+                    "cartesian" : [0.0, 0.0, 0.0]
+                },
+                "horizontalOrigin" : "CENTER",
+                "image" : "/train.png",
+                "pixelOffset" : {
+                    "cartesian2" : [0.0, 0.0]
+                },
+                "scale" : 0.09,
+                "show" : True,
+                "verticalOrigin" : "BOTTOM"
+            },
+            'position': {
+                "interpolationAlgorithm" : "LINEAR",
+                "interpolationDegree" : 1,
+                'epoch': start,
+                'cartographicDegrees': [
+                    0,
+                    tt.station.lng,
+                    tt.station.lat,
+                    height,
+                    time_diff(tt.time, tt2.time),
+                    tt2.station.lng,
+                    tt2.station.lat,
+                    height,
+                ],
+            }
+        }
+        items.append(item)
+    return items
+
+
+def create_stations_czml():
+    print('start create_stations_czml')
     czml = create_czml()
     nodes = list(
         session.query(Node)
@@ -140,12 +212,31 @@ def create_train_czml():
 
     for st in stations.values():
         czml.append(station(st))
-
     print('finished')
-
     return czml
 
 
-with open('./public/test.czml', 'w') as f:
-    data = create_train_czml()
+def create_trains_czml():
+    print('start create_trains_czml')
+    czml = create_czml()
+    trains = list(
+        session.query(Train)
+        .join(Train.timetables, Train.railway, TrainTimetable.station)
+        .filter(Railway.operator_id.in_(IS_DISPLAYED))
+        .options(joinedload(Train.timetables))
+    )
+    print('queried')
+    for train in trains:
+        czml.extend(moving_train(train))
+
+    print('finished')
+    return czml
+
+
+with open('./public/stations.czml', 'w') as f:
+    data = create_stations_czml()
+    f.write(json.dumps(data, sort_keys=True, indent=2))
+
+with open('./public/trains.czml', 'w') as f:
+    data = create_trains_czml()
     f.write(json.dumps(data, sort_keys=True, indent=2))

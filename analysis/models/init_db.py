@@ -2,6 +2,7 @@ import datetime
 from analysis.models.base import Base, engine, session
 from analysis.models.stations import (
     Operator, Railway, Station, Node, Train, TrainTimetable,
+    IS_DISPLAYED, MIN_TIME, MAX_TIME,
 )
 from analysis.api import download_all
 
@@ -88,6 +89,9 @@ def init_timetable():
         cal = item['odpt:calendar']
         if cal != 'odpt.Calendar:Weekday':
             continue
+        # for DB speed optimization
+        if item['odpt:operator'] not in IS_DISPLAYED:
+            continue
 
         assert id not in trains
         trains[id] = Train(
@@ -108,11 +112,14 @@ def init_timetable():
                 continue
 
             h, m = time.split(':')
+            time = datetime.time(int(h), int(m))
+            if time < MIN_TIME or time > MAX_TIME:
+                continue
 
             items.append(TrainTimetable(
                 train_id=id,
                 station_id=st,
-                time=datetime.time(int(h), int(m)),
+                time=time,
             ))
 
     session.bulk_save_objects(items)

@@ -1,3 +1,4 @@
+import datetime
 from sqlalchemy import Column, Integer, String, Float, ForeignKey, Time
 from sqlalchemy.orm import relationship
 from .base import Base
@@ -56,6 +57,10 @@ class Train(Base):
     type = Column(String, nullable=False)
 
     railway = relationship(Railway, lazy='joined')
+    timetables = relationship(
+        'TrainTimetable', lazy='joined', backref='train',
+        order_by='TrainTimetable.time',
+    )
 
 
 class TrainTimetable(Base):
@@ -64,7 +69,6 @@ class TrainTimetable(Base):
     station_id = Column(String, ForeignKey('station.id'), nullable=False)
     time = Column(Time, nullable=False)
 
-    train = relationship(Train, lazy='joined', backref='timetables')
     station = relationship(Station, lazy='joined', backref='timetables')
 
 
@@ -109,14 +113,17 @@ IS_DISPLAYED = [
     # 'odpt.Operator:SaitamaRailway',
     # 'odpt.Operator:ShinKeisei',
     # 'odpt.Operator:Tobu',
+
     'odpt.Operator:Toei',
+    'odpt.Operator:TokyoMetro',
     'odpt.Operator:JR-East',
+
     # 'odpt.Operator:Keikyu',
     # 'odpt.Operator:Keio',
     # 'odpt.Operator:Keisei',
     # 'odpt.Operator:Odakyu',
     # 'odpt.Operator:Seibu',
-    'odpt.Operator:TokyoMetro',
+
     # 'odpt.Operator:TokyoMonorail',
     # 'odpt.Operator:Tokyu',
     # 'odpt.Operator:ToyoRapid',
@@ -128,3 +135,6 @@ IS_SUBWAY = [
     'odpt.Operator:Toei',
     'odpt.Operator:TokyoMetro',
 ]
+
+MIN_TIME = datetime.time(10, 00)
+MAX_TIME = datetime.time(13, 00)

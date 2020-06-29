@@ -2,6 +2,7 @@
 
 const viewer = new Cesium.Viewer('cesiumContainer', {
     terrianProvider: Cesium.createWorldTerrain(),
+    shouldAnimate: true,
 });
 const scene = viewer.scene;
 const globe = scene.globe;
@@ -20,8 +21,10 @@ const tokyo = {
     lng: 139.8033,
 };
 
-const ds = Cesium.CzmlDataSource.load('/test.czml');
-viewer.dataSources.add(ds);
+const stations = Cesium.CzmlDataSource.load('/stations.czml');
+viewer.dataSources.add(stations);
+const trains = Cesium.CzmlDataSource.load('/trains.czml');
+viewer.dataSources.add(trains);
 
 viewer.camera.setView({
     destination: Cesium.Cartesian3.fromDegrees(
