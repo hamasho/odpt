@@ -7,6 +7,3 @@ node_modules
 /response.sqlite
 /db.sqlite
 /cache
-
-# frontend
-/public/**/*.czml
